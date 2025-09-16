@@ -14,6 +14,7 @@ from langchain_core.runnables import RunnableLambda
 # Environment variables
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "/app/chroma_data")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
+LLM_MODEL = os.getenv("LLM_MODEL", "mistral:7b-instruct-v0.3-q4_K_M")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +43,7 @@ class INGIncidentAnalyzer:
         )
 
         self.llm = Ollama(
-            model="tinyllama:latest",
+            model=LLM_MODEL,
             temperature=0.1,
             base_url=OLLAMA_BASE_URL,
             timeout=1000,
