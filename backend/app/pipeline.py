@@ -128,7 +128,7 @@ class INGIncidentAnalyzer:
 
     def ingest_incident(self, incident: Dict[str, Any]) -> bool:
         """Add a single incident to vector store"""
-            content = f"""
+        content = f"""
             INCIDENT ID: {incident.get('incident_id')}
             TIMESTAMP: {incident.get('timestamp')}
             CATEGORY: {incident.get('category')}
@@ -194,4 +194,9 @@ class INGIncidentAnalyzer:
         except Exception as e:
             logger.warning(f"Failed to get stats: {e}")
             return {"total_documents": 0}
+    
+    def get_incidents(self) -> List[Document]:
+        """Get collection statistics"""
+        return self.vectorstore._collection.get()["documents"]
+
 

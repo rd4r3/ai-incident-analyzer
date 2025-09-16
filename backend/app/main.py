@@ -122,6 +122,15 @@ async def search_incidents(query: str, k: int = 5):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/incidents", response_model=Dict[str, Any])
+async def get_incidents():
+    """Get all incidents for dashboard"""
+    try:
+        results = incident_service.get_incidents()
+        return {"success": True, "results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(
         app, 
