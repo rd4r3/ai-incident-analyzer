@@ -15,3 +15,6 @@ __pycache__/
 
 scratch
 notes
+
+# Ignore Chroma db
+chroma_data/*
