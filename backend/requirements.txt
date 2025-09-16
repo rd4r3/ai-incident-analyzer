@@ -1,0 +1,10 @@
+fastapi==0.116.1
+uvicorn==0.35.0
+langchain==0.3.27
+langchain-community==0.3.29
+langchain-chroma==0.2.6
+sentence-transformers==5.1.0
+chromadb==1.0.21
+ollama==0.5.3
+pydantic==2.11.9
+python-multipart==0.0.20

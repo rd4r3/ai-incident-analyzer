@@ -1,0 +1,84 @@
+services:
+  backend:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build:
+      context: ./backend  # Path to backend directory
+      dockerfile: dockerfile
+    ports:
+      - "8000:8000"  # Host:8000 → Container:8000
+    user: "1000:1000"  # Match your host user ID
+    environment:
+      # - OLLAMA_HOST=host.docker.internal
+      # - OLLAMA_PORT=11434
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - CHROMA_DB_PATH=/app/chroma_data
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ${PWD}/chroma_data:/app/chroma_data
+    networks:
+      - ing-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    # depends_on:
+    #   ollama:
+
+  frontend:
+    build:
+      context: ./frontend  # Path to frontend directory
+      dockerfile: dockerfile
+    ports:
+      - "8501:8501"  # Host:8501 → Container:8501
+    environment:
+      - API_BASE_URL=http://backend:8000  # Use service name for internal communication
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ing-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - ing-network
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0
+  #   # healthcheck:
+  #   #   test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #   #   interval: 10s
+  #   #   timeout: 5s
+  #   #   retries: 10
+  #   #   start_period: 30s
+  #   restart: unless-stopped
+
+networks:
+  ing-network:
+    driver: bridge
+    name: ing-incident-network
+
+volumes:
+  chroma_data:
+    name: ing-chroma-data
+    driver: local
+    driver_opts:
+      type: none
+      device: ./chroma_data  # Bind to host directory
+      o: bind,uid=1000,gid=1000,rw
+  # ollama_data:
