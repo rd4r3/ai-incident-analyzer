@@ -39,7 +39,8 @@ class INGIncidentAnalyzer:
         self.vectorstore = Chroma(
             persist_directory=self.persist_directory,
             embedding_function=self.embeddings,
-            collection_name="ing_incidents"
+            collection_name="ing_incidents",
+            collection_metadata={"hnsw:space": "cosine"}
         )
 
         self.llm = Ollama(
@@ -56,40 +57,42 @@ class INGIncidentAnalyzer:
     def setup_prompts(self):
         """Define prompt templates"""
         self.root_cause_prompt = ChatPromptTemplate.from_template("""
-                You are an expert incident analyst. Use the following historical incident context to identify the root cause of the current issue.
+            You are an expert incident analyst. Use the following historical incident context to identify the root cause of the current issue.
 
-                Historical Context:
-                {context}
+            Historical Context:
+            {context}
 
-                Question:
-                {question}
+            Current Issue:
+            {question}
 
-                Please provide a structured analysis with:
-                1. Primary Root Cause
-                2. Contributing Factors
-                3. Evidence
-                4. Recommended Solutions
-                5. Preventive Measures
+            Please provide a structured analysis with:
+            1. Primary Root Cause
+            2. Contributing Factors
+            3. Evidence
+            4. Recommended Solutions
+            5. Preventive Measures
 
-                Analysis:
-                """)
+            Analysis:
+            """)
 
         self.pattern_prompt = ChatPromptTemplate.from_template("""
-        Analyze patterns in these ING incidents:
+            You are an expert incident analyst. Use the following historical incident context to identify patterns.
 
-        {context}
+            Historical Context:
+            {context}
 
-        Question: {question}
+            Current Issue:
+            {question}
 
-        Provide:
-        1. Common themes
-        2. Frequency patterns
-        3. Timeline trends
-        4. Severity correlations
-        5. Strategic recommendations
+            Provide:
+            1. Common themes
+            2. Frequency patterns
+            3. Timeline trends
+            4. Severity correlations
+            5. Strategic recommendations
 
-        Analysis:
-        """)
+            Analysis:
+            """)
     
     def setup_chains(self):
         """Setup LangChain chains"""
@@ -125,16 +128,16 @@ class INGIncidentAnalyzer:
 
     def ingest_incident(self, incident: Dict[str, Any]) -> bool:
         """Add a single incident to vector store"""
-        content = f"""
-INCIDENT ID: {incident.get('incident_id')}
-TIMESTAMP: {incident.get('timestamp')}
-CATEGORY: {incident.get('category')}
-SEVERITY: {incident.get('severity')}
-DESCRIPTION: {incident.get('description')}
-ROOT CAUSE: {incident.get('root_cause', 'Not specified')}
-RESOLUTION: {incident.get('resolution', 'Not resolved')}
-IMPACT: {incident.get('impact', 'Not specified')}
-"""
+            content = f"""
+            INCIDENT ID: {incident.get('incident_id')}
+            TIMESTAMP: {incident.get('timestamp')}
+            CATEGORY: {incident.get('category')}
+            SEVERITY: {incident.get('severity')}
+            DESCRIPTION: {incident.get('description')}
+            ROOT CAUSE: {incident.get('root_cause', 'Not specified')}
+            RESOLUTION: {incident.get('resolution', 'Not resolved')}
+            IMPACT: {incident.get('impact', 'Not specified')}
+            """
         chunks = self.text_splitter.split_text(content)
         documents = []
 
@@ -156,8 +159,14 @@ IMPACT: {incident.get('impact', 'Not specified')}
 
     def search_incidents(self, query: str, k: int = 5) -> List[Document]:
         """Search for similar incidents"""
-        retriever = self.vectorstore.as_retriever(search_kwargs={"k": k})
-        return retriever.invoke(query)
+        results: List[Tuple[Document, float]] = self.vectorstore.similarity_search_with_score(query, k=k)
+        # for i, (doc, score) in enumerate(results):
+        #     logger.info(f"[{i}] Score: {score:.4f}")
+        #     logger.info(f"Content: {doc.page_content[:200]}...")  # Truncate for readability
+        #     logger.info(f"Metadata: {doc.metadata}")
+        #     logger.info("-" * 40)
+        filtered = [doc for doc, score in results if score < 0.5] 
+        return filtered
 
     def analyze_root_cause(self, query: str, k: int = 5) -> str:
         """Perform root cause analysis"""
