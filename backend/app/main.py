@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from typing import List, Dict, Any
 import uvicorn
+from .models import Incident, AnalysisRequest, AnalysisResponse
+from .incident_service import IncidentService
 import os
 import logging
 
@@ -17,17 +19,14 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-from .models import Incident, AnalysisRequest, AnalysisResponse
-from .incident_service import IncidentService
-
 app = FastAPI(title="ING Incident Analyzer API", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -41,6 +40,9 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     response = await call_next(request)
     logger.info(f"Response status: {response.status_code}")
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+    response.headers["Access-Control-Allow-Headers"] = "*"
     return response
 
 
@@ -130,6 +132,10 @@ async def get_incidents():
         return {"success": True, "results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.options("/{rest_of_path:path}")
+async def catch_all_options(rest_of_path: str):
+    return PlainTextResponse("")  # status 200 + CORS headers
 
 if __name__ == "__main__":
     uvicorn.run(
