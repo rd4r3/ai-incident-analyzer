@@ -1,4 +1,4 @@
-# ING Incident Analyzer
+# AI Incident Analyzer
 
 An AI-powered RAG pipeline for intelligent banking incident management. Automates root cause analysis, pattern detection, and solution generation using LangChain, Ollama, and ChromaDB.
 
