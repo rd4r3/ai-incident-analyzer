@@ -25,6 +25,8 @@ export const ANALYSIS_TYPES = {
 export const COLORS = {
   primary: '#ff6b00', // ING orange
   secondary: '#005aa9', // ING blue
+  accent: '#ffffff',       // Powder Blue
+  text: '#4F4F4F',         // Soft Gray
   success: '#28a745',
   danger: '#dc3545',
   warning: '#ffc107',
@@ -32,5 +34,6 @@ export const COLORS = {
   light: '#f8f9fa',
   dark: '#343a40',
   white: '#ffffff',
-  black: '#000000'
+  black: '#000000',
+  background: '#FAFAFA',
 };

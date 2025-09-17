@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform 
+  Platform,
 } from 'react-native';
-import { 
-  TextInput, 
-  Card, 
-  Title, 
-  Paragraph, 
+import {
+  TextInput,
+  Card,
+  Title,
   ActivityIndicator,
-  SegmentedButtons,
-  RadioButton 
+  RadioButton,
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -23,6 +21,71 @@ import { incidentAPI } from '../services/api';
 import { COLORS, ANALYSIS_TYPES } from '../utils/constants';
 // import ErrorMessage from '../components/ErrorMessage';
 import AnalysisResult from '../components/AnalysisResult';
+
+const AnalysisTypeSelector = ({ value, onChange }) => (
+  <Card style={styles.card}>
+    <Card.Content>
+      <Title style={styles.basicText}>Analysis Type</Title>
+      <RadioButton.Group onValueChange={onChange} value={value}>
+        {Object.entries(ANALYSIS_TYPES).map(([key, val]) => (
+          <View key={val} style={styles.radioOption}>
+            <RadioButton value={val} />
+            <Text style={styles.basicText}>{val.replace('_', ' ').toUpperCase()}</Text>
+          </View>
+        ))}
+      </RadioButton.Group>
+    </Card.Content>
+  </Card>
+);
+
+const ActionButtons = ({ onAnalyze, onClear, loading }) => (
+  <View style={styles.buttonRow}>
+    <TouchableOpacity
+      style={[styles.button, styles.primaryButton]}
+      onPress={onAnalyze}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color={COLORS.white} />
+      ) : (
+        <>
+          <Ionicons name="rocket" size={20} color={COLORS.white} />
+          <Text style={styles.buttonText}>Analyze</Text>
+        </>
+      )}
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={[styles.button, styles.secondaryButton]}
+      onPress={onClear}
+    >
+      <Ionicons name="trash" size={20} color={COLORS.dark} />
+      <Text style={styles.buttonText}>Clear</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const HistoryList = ({ items, onSelect }) => (
+  <Card style={styles.card}>
+    <Card.Content>
+      <Title>Recent Analyses</Title>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.historyItem}
+          onPress={() => onSelect(item)}
+        >
+          <Text style={styles.historyQuery} numberOfLines={1}>
+            {item.query}
+          </Text>
+          <Text style={styles.historyType}>
+            {item.type.replace('_', ' ').toUpperCase()}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </Card.Content>
+  </Card>
+);
 
 export default function AnalysisScreen() {
   const [query, setQuery] = useState('');
@@ -42,34 +105,23 @@ export default function AnalysisScreen() {
     setError(null);
 
     try {
-      let response;
-      
-      switch (analysisType) {
-        case ANALYSIS_TYPES.ROOT_CAUSE:
-          response = await incidentAPI.analyzeRootCause(query);
-          break;
-        case ANALYSIS_TYPES.PATTERNS:
-          response = await incidentAPI.analyzePatterns(query);
-          break;
-        case ANALYSIS_TYPES.SEARCH:
-          response = await incidentAPI.searchIncidents(query);
-          break;
-        default:
-          throw new Error('Invalid analysis type');
-      }
+      const response = await {
+        [ANALYSIS_TYPES.ROOT_CAUSE]: incidentAPI.analyzeRootCause,
+        [ANALYSIS_TYPES.PATTERNS]: incidentAPI.analyzePatterns,
+        [ANALYSIS_TYPES.SEARCH]: incidentAPI.searchIncidents,
+      }[analysisType](query);
 
       if (response.data) {
         setResult(response.data);
-        // Add to history
-        setHistory(prev => [
+        setHistory((prev) => [
           {
             id: Date.now(),
             query,
             type: analysisType,
             result: response.data,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           },
-          ...prev.slice(0, 9) // Keep only last 10
+          ...prev.slice(0, 9),
         ]);
       }
     } catch (err) {
@@ -81,50 +133,34 @@ export default function AnalysisScreen() {
   };
 
   const clearResults = () => {
+    setQuery('');
     setResult(null);
     setError(null);
-    setQuery('');
+  };
+
+  const handleHistorySelect = (item) => {
+    setQuery(item.query);
+    setAnalysisType(item.type);
+    setResult(item.result);
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView>
+      <ScrollView
+            style={styles.container}
+          >
         <View style={styles.header}>
-          <Ionicons name="analytics" size={32} color={COLORS.primary} />
+          {/* <Ionicons name="analytics" size={32} color={COLORS.primary} /> */}
           <Text style={styles.title}>Incident Analysis</Text>
           <Text style={styles.subtitle}>AI-powered root cause analysis</Text>
         </View>
 
         {/* {error && <ErrorMessage message={error} onRetry={analyzeIncident} />} */}
 
-        {/* Analysis Type Selection */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Analysis Type</Title>
-            <RadioButton.Group onValueChange={setAnalysisType} value={analysisType}>
-              <View style={styles.radioOption}>
-                <RadioButton value={ANALYSIS_TYPES.ROOT_CAUSE} />
-                <Text>Root Cause Analysis</Text>
-              </View>
-              <View style={styles.radioOption}>
-                <RadioButton value={ANALYSIS_TYPES.PATTERNS} />
-                <Text>Pattern Analysis</Text>
-              </View>
-              <View style={styles.radioOption}>
-                <RadioButton value={ANALYSIS_TYPES.SEARCH} />
-                <Text>Search Incidents</Text>
-              </View>
-            </RadioButton.Group>
-          </Card.Content>
-        </Card>
+        <AnalysisTypeSelector value={analysisType} onChange={setAnalysisType} />
 
-        {/* Query Input */}
         <Card style={styles.card}>
           <Card.Content>
-            <Title>Describe the Incident</Title>
+            <Title style={styles.basicText}>Describe the Incident</Title>
             <TextInput
               mode="outlined"
               multiline
@@ -137,97 +173,57 @@ export default function AnalysisScreen() {
           </Card.Content>
         </Card>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={analyzeIncident}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={COLORS.white} />
-            ) : (
-              <>
-                <Ionicons name="rocket" size={20} color={COLORS.white} />
-                <Text style={styles.buttonText}>Analyze</Text>
-              </>
-            )}
-          </TouchableOpacity>
+        <ActionButtons onAnalyze={analyzeIncident} onClear={clearResults} loading={loading} />
 
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={clearResults}
-          >
-            <Ionicons name="trash" size={20} color={COLORS.dark} />
-            <Text style={styles.buttonText}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Results */}
         {result && (
-          <AnalysisResult 
-            result={result} 
-            analysisType={analysisType}
-            query={query}
-          />
+          <AnalysisResult result={result} analysisType={analysisType} query={query} />
         )}
 
-        {/* Analysis History */}
-        {history.length > 0 && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Recent Analyses</Title>
-              {history.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.historyItem}
-                  onPress={() => {
-                    setQuery(item.query);
-                    setAnalysisType(item.type);
-                    setResult(item.result);
-                  }}
-                >
-                  <Text style={styles.historyQuery} numberOfLines={1}>
-                    {item.query}
-                  </Text>
-                  <Text style={styles.historyType}>
-                    {item.type.replace('_', ' ').toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </Card.Content>
-          </Card>
-        )}
+        {history.length > 0 && <HistoryList items={history} onSelect={handleHistorySelect} />}
       </ScrollView>
-    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
     padding: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    color: COLORS.text,
+    fontSize: 16,
   },
   header: {
     alignItems: 'center',
     marginBottom: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
     color: COLORS.primary,
-    marginTop: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.dark,
+    color: COLORS.text,
   },
   card: {
     marginBottom: 16,
+    backgroundColor: COLORS.background,
+    color: COLORS.text ,
+    padding: 16,
+    borderRadius: 12,
   },
   textInput: {
     marginTop: 8,
+    backgroundColor: COLORS.background,
+    color: COLORS.text
   },
   radioOption: {
     flexDirection: 'row',
@@ -274,5 +270,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.dark,
     marginTop: 4,
+  },
+   basicText: {
+    color: COLORS.text,
   },
 });
