@@ -124,7 +124,7 @@ async def get_incidents():
     """Get all incidents for dashboard"""
     try:
         results = incident_service.get_incidents()
-        return {"success": True, "results": results}
+        return {"success": True, "results": [Incident(**data) for data in results]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

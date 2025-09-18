@@ -59,6 +59,6 @@ class IncidentService:
         """Get statistics"""
         return self.analyzer.get_stats()
 
-    def get_incidents(self) -> List[Dict[str, Any]]:
+    def get_incidents(self) -> List[Dict]:
         """Get incidents"""
         return self.analyzer.get_incidents()

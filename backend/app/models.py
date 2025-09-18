@@ -12,6 +12,7 @@ class Incident(BaseModel):
     resolution: Optional[str] = None
     affected_components: Optional[List[str]] = None
     impact: Optional[str] = None
+    resolution_time_mins: int
 
 class AnalysisRequest(BaseModel):
     query: str

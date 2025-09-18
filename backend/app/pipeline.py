@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from typing import List, Dict, Any
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -25,6 +26,17 @@ class IncidentAnalyzer:
     def __init__(self):
         self.persist_directory = CHROMA_DB_PATH
         self.setup_components()
+
+    def parse_incident_string(self, doc: str) -> dict:
+        pattern = r"(?P<key>[A-Z _]+): (?P<value>.+)"
+        incident = {}
+        for line in doc.split("\n"):
+            match = re.match(pattern, line.strip())
+            if match:
+                key = match.group("key").strip().lower().replace(" ", "_")
+                value = match.group("value").strip()
+                incident[key] = value
+        return incident
 
     def setup_components(self):
         """Initialize LangChain components"""
@@ -137,6 +149,7 @@ class IncidentAnalyzer:
             ROOT CAUSE: {incident.get('root_cause', 'Not specified')}
             RESOLUTION: {incident.get('resolution', 'Not resolved')}
             IMPACT: {incident.get('impact', 'Not specified')}
+            RESOLUTION TIME MINS: {incident.get('resolution_time_mins')}
             """
         chunks = self.text_splitter.split_text(content)
         documents = []
@@ -195,8 +208,10 @@ class IncidentAnalyzer:
             logger.warning(f"Failed to get stats: {e}")
             return {"total_documents": 0}
     
-    def get_incidents(self) -> List[Document]:
-        """Get collection statistics"""
-        return self.vectorstore._collection.get()["documents"]
+
+    def get_incidents(self) -> list[dict]:
+        raw_docs = self.vectorstore.get()["documents"]
+        return [self.parse_incident_string(doc) for doc in raw_docs]
+
 
 
