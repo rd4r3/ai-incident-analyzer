@@ -18,7 +18,7 @@ services:
     volumes:
       - ${PWD}/chroma_data:/app/chroma_data
     networks:
-      - ing-network
+      - ai-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -43,7 +43,7 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - ing-network
+      - ai-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501"]
       interval: 30s
@@ -58,7 +58,7 @@ services:
   #   volumes:
   #     - ollama_data:/root/.ollama
   #   networks:
-  #     - ing-network
+  #     - ai-network
   #   environment:
   #     - OLLAMA_HOST=0.0.0.0
   #   # healthcheck:
@@ -70,13 +70,13 @@ services:
   #   restart: unless-stopped
 
 networks:
-  ing-network:
+  ai-network:
     driver: bridge
-    name: ing-incident-network
+    name: ai-incident-network
 
 volumes:
   chroma_data:
-    name: ing-chroma-data
+    name: ai-chroma-data
     driver: local
     driver_opts:
       type: none
