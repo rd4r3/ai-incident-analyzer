@@ -37,8 +37,8 @@ An AI-powered RAG pipeline for intelligent banking incident management. Automate
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ing-incident-analyzer.git
-cd ing-incident-analyzer
+git clone https://github.com/your-username/ai-incident-analyzer.git
+cd ai-incident-analyzer
 
 # Create data directory with proper permissions
 mkdir -p chroma_data
@@ -210,7 +210,7 @@ curl -X GET "http://localhost:8000/api/search?query=database%20connection%20time
 ## 🏗️ Project Structure
 
 ```
-ing-incident-analyzer/
+ai-incident-analyzer/
 ├── backend/
 │   ├── Dockerfile          # Backend-specific Dockerfile
 │   ├── app/
