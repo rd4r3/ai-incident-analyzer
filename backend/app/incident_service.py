@@ -1,4 +1,4 @@
-from .pipeline import INGIncidentAnalyzer
+from .pipeline import IncidentAnalyzer
 from typing import List, Dict, Any
 import logging
 import os
@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class IncidentService:
     def __init__(self):
-        self.analyzer = INGIncidentAnalyzer()
+        self.analyzer = IncidentAnalyzer()
     
     def add_incident(self, incident_data: Dict[str, Any]) -> str:
         """Add a single incident"""

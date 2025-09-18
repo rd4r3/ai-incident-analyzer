@@ -23,8 +23,8 @@ export const ANALYSIS_TYPES = {
 };
 
 export const COLORS = {
-  primary: '#ff6b00', // ING orange
-  secondary: '#005aa9', // ING blue
+  primary: '#ff6b00',
+  secondary: '#005aa9',
   accent: '#ffffff',       // Powder Blue
   text: '#4F4F4F',         // Soft Gray
   success: '#28a745',

@@ -12,7 +12,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 
 st.set_page_config(
-    page_title="ING Incident Analyzer",
+    page_title="AI Incident Analyzer",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -109,7 +109,7 @@ def show_api_status():
         return False
 
 def main():
-    st.markdown('<h1 class="main-header">🔍 ING Incident Analyzer</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🔍 AI Incident Analyzer</h1>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:

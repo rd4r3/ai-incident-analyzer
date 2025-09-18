@@ -103,7 +103,7 @@ export default function HomeScreen({ navigation }) {
       {/* {error && <ErrorMessage message={error} onRetry={loadData} />} */}
 
       <View style={styles.header}>
-        <Text style={styles.title}>ING Incident Analyzer</Text>
+        <Text style={styles.title}>AI Incident Analyzer</Text>
         <Text style={styles.subtitle}>Mobile Dashboard</Text>
       </View>
 

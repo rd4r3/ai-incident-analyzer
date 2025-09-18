@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class INGIncidentAnalyzer:
+class IncidentAnalyzer:
     def __init__(self):
         self.persist_directory = CHROMA_DB_PATH
         self.setup_components()

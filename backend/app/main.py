@@ -19,7 +19,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="ING Incident Analyzer API", version="1.0.0")
+app = FastAPI(title="AI Incident Analyzer API", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
@@ -43,7 +43,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    return {"message": "ING Incident Analyzer API"}
+    return {"message": "AI Incident Analyzer API"}
 
 @app.get("/health")
 async def health_check():
@@ -53,7 +53,7 @@ async def health_check():
         stats = incident_service.get_stats()
         return {
             "status": "healthy", 
-            "service": "ing-incident-analyzer",
+            "service": "ai-incident-analyzer",
             "incident_count": stats.get("total_documents", 0)
         }
     except Exception as e:
