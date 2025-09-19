@@ -11,11 +11,19 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_community.llms import Ollama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
+from .mistral_chat import ChatMistral
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Environment variables
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "/app/chroma_data")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 LLM_MODEL = os.getenv("LLM_MODEL", "mistral:7b-instruct-v0.3-q4_K_M")
+
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "open-mistral-7b")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -55,13 +63,19 @@ class IncidentAnalyzer:
             collection_metadata={"hnsw:space": "cosine"}
         )
 
-        self.llm = Ollama(
-            model=LLM_MODEL,
-            temperature=0.1,
-            base_url=OLLAMA_BASE_URL,
-            timeout=1000,
-            verbose=True
+        self.llm = ChatMistral(
+            api_key=MISTRAL_API_KEY,
+            model=MISTRAL_MODEL,
+            temperature=0.1
         )
+
+        # self.llm = Ollama(
+        #     model=LLM_MODEL,
+        #     temperature=0.1,
+        #     base_url=OLLAMA_BASE_URL,
+        #     timeout=1000,
+        #     verbose=True
+        # )
 
         self.setup_prompts()
         self.setup_chains()

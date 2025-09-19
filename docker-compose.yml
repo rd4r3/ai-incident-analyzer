@@ -14,6 +14,7 @@ services:
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - CHROMA_DB_PATH=/app/chroma_data
       - LLM_MODEL=qwen2:1.5b-instruct-q4_K_M
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - LOG_LEVEL=DEBUG
     volumes:
       - ${PWD}/chroma_data:/app/chroma_data
