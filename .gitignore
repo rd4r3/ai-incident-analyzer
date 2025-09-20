@@ -21,3 +21,5 @@ chroma_data/*
 
 # Ignore .expo
 mobile/.expo/
+
+sample_incidents.json
