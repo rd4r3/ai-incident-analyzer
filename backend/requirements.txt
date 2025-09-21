@@ -11,3 +11,5 @@ chromadb==1.0.21
 ollama==0.5.3
 pydantic==2.11.9
 python-multipart==0.0.20
+psutil==5.9.8
+python-dotenv==1.0.1

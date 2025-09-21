@@ -1,7 +1,11 @@
 import os
 import logging
 import re
-from typing import List, Dict, Any, Tuple, Optional
+import gc
+import psutil
+from typing import List, Dict, Any, Tuple, Optional, Union
+from time import time
+from functools import wraps
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -23,6 +27,8 @@ SIMILARITY_THRESHOLD = 0.5
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 TEMPERATURE = 0.1
+MEMORY_LIMIT_PERCENT = 80  # % of available memory to use
+BATCH_INGESTION_SIZE = 50  # Number of incidents to process in a batch
 
 # Load environment variables
 load_dotenv()
@@ -34,9 +40,51 @@ LLM_MODEL = os.getenv("LLM_MODEL", DEFAULT_LLM_MODEL)
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", DEFAULT_MISTRAL_MODEL)
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# Setup logging with memory-efficient configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Green coding: Memory monitoring decorator
+def memory_efficient(percent_limit=MEMORY_LIMIT_PERCENT):
+    """Decorator to check memory usage before running a function"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            process = psutil.Process()
+            current_memory = process.memory_info().rss
+            available_memory = psutil.virtual_memory().available
+            memory_limit = available_memory * (percent_limit / 100)
+
+            if current_memory > memory_limit:
+                logger.warning(f"Memory limit exceeded for {func.__name__}. Current: {current_memory}, Limit: {memory_limit}")
+                gc.collect()
+                if hasattr(torch, 'cuda') and torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+# Green coding: Performance monitoring decorator
+def performance_monitor(threshold_seconds=5.0):
+    """Decorator to log slow function calls"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time()
+            result = func(*args, **kwargs)
+            duration = time() - start_time
+            if duration > threshold_seconds:
+                logger.warning(f"Slow operation: {func.__name__} took {duration:.2f}s")
+            return result
+        return wrapper
+    return decorator
 
 
 class PromptTemplates:
@@ -181,20 +229,38 @@ class IncidentAnalyzer:
                 incident[key] = value
         return incident
 
+    @memory_efficient()
+    @performance_monitor()
     def ingest_incident(self, incident: Dict[str, Any]) -> bool:
-        """Add a single incident to vector store"""
+        """Add a single incident to vector store with green coding optimizations"""
         try:
-            content = f"""
-                INCIDENT ID: {incident.get('incident_id')}
-                TIMESTAMP: {incident.get('timestamp')}
-                CATEGORY: {incident.get('category')}
-                SEVERITY: {incident.get('severity')}
-                DESCRIPTION: {incident.get('description')}
-                ROOT CAUSE: {incident.get('root_cause', 'Not specified')}
-                RESOLUTION: {incident.get('resolution', 'Not resolved')}
-                IMPACT: {incident.get('impact', 'Not specified')}
-                RESOLUTION TIME MINS: {incident.get('resolution_time_mins')}
-                """
+            if not incident:
+                logger.warning("Empty incident data provided")
+                return False
+
+            # Green coding: Only include non-empty values to reduce processing
+            content_parts = []
+            for key, value in [
+                ('incident_id', incident.get('incident_id')),
+                ('timestamp', incident.get('timestamp')),
+                ('category', incident.get('category')),
+                ('severity', incident.get('severity')),
+                ('description', incident.get('description')),
+                ('root_cause', incident.get('root_cause', 'Not specified')),
+                ('resolution', incident.get('resolution', 'Not resolved')),
+                ('impact', incident.get('impact', 'Not specified')),
+                ('resolution_time_mins', incident.get('resolution_time_mins'))
+            ]:
+                if value:
+                    content_parts.append(f"{key.upper().replace('_', ' ')}: {value}")
+
+            content = "\n".join(content_parts)
+
+            # Green coding: Skip empty content
+            if not content.strip():
+                logger.warning("No valid content to ingest")
+                return False
+
             chunks = self.text_splitter.split_text(content)
             documents = [
                 Document(
@@ -216,6 +282,26 @@ class IncidentAnalyzer:
         except Exception as e:
             logger.error(f"Failed to ingest incident: {e}")
             return False
+
+    def ingest_incidents_batch(self, incidents: List[Dict[str, Any]]) -> int:
+        """Batch ingest incidents with green coding optimizations"""
+        if not incidents:
+            return 0
+
+        success_count = 0
+        # Process in batches to manage memory usage
+        for i in range(0, len(incidents), BATCH_INGESTION_SIZE):
+            batch = incidents[i:i + BATCH_INGESTION_SIZE]
+            for incident in batch:
+                if self.ingest_incident(incident):
+                    success_count += 1
+
+            # Force cleanup between batches
+            gc.collect()
+            if hasattr(torch, 'cuda') and torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        return success_count
 
     def search_incidents(self, query: str, k: int = 5) -> List[Document]:
         """Search for similar incidents with similarity filtering"""
