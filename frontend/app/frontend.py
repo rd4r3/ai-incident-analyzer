@@ -612,9 +612,9 @@ def show_statistics_page(incidents):
         st.plotly_chart(fig, use_container_width=True)
 
 # Sidebar with filters and controls
-def setup_sidebar():
-    """Setup sidebar controls"""
-    with st.sidebar:
+# def setup_sidebar():
+#     """Setup sidebar controls"""
+#     with st.sidebar:
         # st.header("🎛️ Dashboard Controls")
         
         # # Date filter
@@ -659,7 +659,7 @@ if __name__ == "__main__":
         st.session_state.page = "Dashboard"
     
     # Setup sidebar
-    setup_sidebar()
+    # setup_sidebar()
     
     # Run main application
     main()

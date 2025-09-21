@@ -4,7 +4,6 @@ import re
 from typing import List, Dict, Any, Tuple, Optional
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain.schema import Document
 from langchain.prompts import ChatPromptTemplate
@@ -13,6 +12,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 from .mistral_chat import ChatMistral
 from dotenv import load_dotenv
+from .embeddings import TransformersEmbedding
 
 # Constants
 DEFAULT_CHROMA_DB_PATH = "/app/chroma_data"
@@ -101,11 +101,9 @@ class IncidentAnalyzer:
             chunk_overlap=CHUNK_OVERLAP
         )
 
-    def _initialize_embeddings(self) -> HuggingFaceEmbeddings:
+    def _initialize_embeddings(self) -> TransformersEmbedding:
         """Initialize embeddings model"""
-        return HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
+        return TransformersEmbedding("thenlper/gte-small")
 
     def _initialize_vectorstore(self) -> Chroma:
         """Initialize vector store with persistence"""

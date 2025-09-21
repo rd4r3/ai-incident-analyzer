@@ -2,7 +2,10 @@
 FROM python:3.11-slim AS builder
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+torch --extra-index-url https://download.pytorch.org/whl/cpu
+
 
 # 2) Final stage
 FROM python:3.11-slim
@@ -14,8 +17,14 @@ RUN apt-get update && apt-get install -y sqlite3 \
 # Copy only installed packages and app code
 # COPY --from=builder /root/.local /root/.local
 # ENV PATH=/root/.local/bin:$PATH
+# install runtime deps…
 COPY --from=builder /usr/local /usr/local
+
+# copy your code
 COPY . .
+
+# ensure /app is on PYTHONPATH
+ENV PYTHONPATH=/app
 
 # Create non-root user
 ARG USER_ID=1000
