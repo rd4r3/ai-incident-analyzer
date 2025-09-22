@@ -21,15 +21,8 @@ MAX_REQUEST_SIZE = os.getenv("MAX_REQUEST_SIZE", "10MB")
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))  # seconds
 
 # Green coding: Optimized logging configuration
-logging.basicConfig(
-    level=numeric_level,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-
-logger = logging.getLogger(__name__)
+from .logging_config import setup_logging
+logger = setup_logging(__name__)
 
 # Green coding: Resource monitoring decorator
 def resource_monitor(func):

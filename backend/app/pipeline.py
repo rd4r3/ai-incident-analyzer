@@ -3,6 +3,7 @@ import logging
 import re
 import gc
 import psutil
+import torch
 from typing import List, Dict, Any, Tuple, Optional, Union
 from time import time
 from functools import wraps
@@ -41,14 +42,8 @@ MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", DEFAULT_MISTRAL_MODEL)
 
 # Setup logging with memory-efficient configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+from .logging_config import setup_logging
+logger = setup_logging(__name__)
 
 # Green coding: Memory monitoring decorator
 def memory_efficient(percent_limit=MEMORY_LIMIT_PERCENT):

@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, TypedDict
-import logging
 import requests
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.schema import AIMessage, BaseMessage, ChatGeneration, ChatResult, HumanMessage
+from .logging_config import setup_logging
 
 # Set up logging
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 class ApiResponse(TypedDict):
     """Type definition for the API response structure."""
@@ -60,6 +60,9 @@ class ChatMistral(BaseChatModel):
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {e}")
             raise
+        finally:
+            # Ensure resources are cleaned up
+            resp.close()
 
     def _call(self, messages: List[HumanMessage], **kwargs: Any) -> Dict[str, Any]:
         """Call the Mistral AI API with the given messages."""
@@ -82,22 +85,26 @@ class ChatMistral(BaseChatModel):
         Returns:
             ChatResult containing the generated responses
         """
-        # 1) Filter only the user messages
-        user_msgs = [m for m in messages if isinstance(m, HumanMessage)]
+        try:
+            # 1) Filter only the user messages
+            user_msgs = [m for m in messages if isinstance(m, HumanMessage)]
 
-        # 2) Get API response
-        api_resp = self._call(user_msgs, stop=stop)
+            # 2) Get API response
+            api_resp = self._call(user_msgs, stop=stop)
 
-        # 3) Build a flat list of ChatGeneration
-        gens = [
-            ChatGeneration(
-                message=AIMessage(content=choice["message"]["content"])
+            # 3) Build a flat list of ChatGeneration
+            gens = [
+                ChatGeneration(
+                    message=AIMessage(content=choice["message"]["content"])
+                )
+                for choice in api_resp.get("choices", [])
+            ]
+
+            # 4) Return with a 1D generations list
+            return ChatResult(
+                generations=gens,
+                llm_output=api_resp,
             )
-            for choice in api_resp.get("choices", [])
-        ]
-
-        # 4) Return with a 1D generations list
-        return ChatResult(
-            generations=gens,
-            llm_output=api_resp,
-        )
+        finally:
+            # Clean up any resources
+            pass

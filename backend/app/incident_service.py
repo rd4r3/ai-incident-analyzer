@@ -4,10 +4,12 @@ import logging
 import os
 import gc
 import psutil
+import torch
 from time import time
 from functools import wraps
+from .logging_config import setup_logging
 
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 # Green coding: Cache for frequent queries
 class QueryCache:
