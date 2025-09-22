@@ -13,6 +13,7 @@ from langchain_core.runnables import RunnableLambda
 from .mistral_chat import ChatMistral
 from dotenv import load_dotenv
 from .embeddings import TransformersEmbedding
+from chromadb.config import Settings
 
 # Constants
 DEFAULT_CHROMA_DB_PATH = "/app/chroma_data"
@@ -107,11 +108,15 @@ class IncidentAnalyzer:
 
     def _initialize_vectorstore(self) -> Chroma:
         """Initialize vector store with persistence"""
+        client_settings = Settings(
+            anonymized_telemetry=False
+        )
         return Chroma(
             persist_directory=self.persist_directory,
             embedding_function=self.embeddings,
             collection_name="incidents",
-            collection_metadata={"hnsw:space": "cosine"}
+            collection_metadata={"hnsw:space": "cosine"},
+            client_settings=client_settings
         )
 
     def _initialize_llm(self):
