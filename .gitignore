@@ -23,3 +23,6 @@ chroma_data/*
 mobile/.expo/
 
 sample_incidents.json
+
+mcp/build/index.js
+mcp/package-lock.json
